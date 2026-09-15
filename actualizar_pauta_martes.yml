@@ -1,0 +1,40 @@
+name: Monitoreo Editorial Martes - Tinta y Soda
+
+on:
+  schedule:
+    # Corre todos los martes a las 11:00 UTC (08:00 AM hora de Argentina)
+    - cron: '0 11 * * 2'
+  workflow_dispatch: # Permite ejecutarlo manualmente con un clic en GitHub
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  monitorear_y_publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          pip install feedparser
+
+      - name: Ejecutar monitoreo y generar web
+        run: |
+          python monitorear_agenda.py
+
+      - name: Subir cambios a la rama principal
+        run: |
+          git config --global user.name "Tinta y Soda Bot"
+          git config --global user.email "bot@tintaysoda.com"
+          git add pauta_del_dia.md index.html
+          git commit -m "Auto-update: Pauta editorial y web del $(date +'%Y-%m-%d')" || exit 0
+          git push
